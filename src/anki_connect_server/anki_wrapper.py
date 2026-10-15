@@ -11,7 +11,7 @@ import time
 import unicodedata
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from anki.collection import Collection, StripHtmlMode
 from anki.cards import CardId
@@ -838,6 +838,23 @@ class AnkiWrapper:
     def unsuspend(self, cards: list[int]) -> bool:
         card_ids = [CardId(c) for c in cards]
         self.col.sched.unsuspend_cards(card_ids)
+        return True
+
+    def answer_cards(self, answers: list[JsonObject]) -> bool:
+        """Rate cards, updating their scheduling.
+
+        Mirrors AnkiConnect's answerCards. Each entry is {"cardId": int,
+        "ease": 1-4} where 1=Again, 2=Hard, 3=Good, 4=Easy. The v2/v3
+        scheduler is required; the v1 scheduler is not supported.
+        """
+        for answer in answers:
+            card_id = int(cast(int, answer["cardId"]))
+            ease = int(cast(int, answer["ease"]))
+            if ease not in (1, 2, 3, 4):
+                raise ValueError(f"Invalid ease {ease}; expected 1-4")
+            card = self.col.get_card(CardId(card_id))
+            card.start_timer()
+            self.col.sched.answerCard(card, ease)  # type: ignore[arg-type]
         return True
 
     def are_suspended(self, cards: list[int]) -> list[bool]:
