@@ -11,7 +11,7 @@ import time
 import unicodedata
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 from anki.collection import Collection, StripHtmlMode
 from anki.cards import CardId
